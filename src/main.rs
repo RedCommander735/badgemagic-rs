@@ -14,7 +14,7 @@ use clap::{Parser, ValueEnum};
 use embedded_graphics::{
     geometry::Point,
     image::{Image, ImageRawLE},
-    mono_font::{iso_8859_1::FONT_6X9, MonoTextStyle},
+    mono_font::{iso_8859_1::FONT_5X8, MonoTextStyle},
     pixelcolor::BinaryColor,
     text::Text,
     Drawable, Pixel,
@@ -162,8 +162,8 @@ fn generate_payload(args: &mut Args) -> Result<PayloadBuffer> {
             Content::Text { text } => {
                 let text = Text::new(
                     &text,
-                    Point::new(0, 7),
-                    MonoTextStyle::new(&FONT_6X9, BinaryColor::On),
+                    Point::new(0, 8),
+                    MonoTextStyle::new(&FONT_5X8, BinaryColor::On),
                 );
                 payload.add_message_drawable(style, &text);
             }
