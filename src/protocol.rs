@@ -249,6 +249,25 @@ impl TryFrom<f32> for Brightness {
     }
 }
 
+impl TryFrom<&str> for Mode {
+    type Error = Infallible;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(match value {
+            "left" => Self::Left,
+            "right" => Self::Right,
+            "up" => Self::Up,
+            "down" => Self::Down,
+            "center" => Self::Center,
+            "fast" => Self::Fast,
+            "drop" => Self::Drop,
+            "curtain" => Self::Curtain,
+            "laser" => Self::Laser,
+            _ => return Err(u8::try_from(-1).unwrap_err()),
+        })
+    }
+}
+
 const MSG_PADDING_ALIGN: usize = 64;
 
 const MAGIC: [u8; 5] = *b"wang\0";
