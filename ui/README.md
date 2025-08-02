@@ -15,6 +15,8 @@ Currently implemented:
   - 2 different font sizes
 
 TODO:
-- [ ] Multi-message support
+- [x] Multi-message support
 - [ ] Save/Import/Export messages
+  - [ ] Persistent Message Store with https://v2.tauri.app/plugin/sql/
+  - [ ] Export as TOML
 - [ ] Custom Drawing

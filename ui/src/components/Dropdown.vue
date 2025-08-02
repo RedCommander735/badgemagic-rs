@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import {defineComponent, ref} from "vue";
 
 interface Props {
   options: Option[],
