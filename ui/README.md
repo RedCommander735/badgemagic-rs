@@ -1,5 +1,11 @@
 # Badgemagic-RS GUI
-A simple app that uses badgemagic-rs under the hood and provides a graphical user interface with [Tauri](https://tauri.app/).
+A simple app that uses badgemagic-rs under the hood and provides a graphical user interface with [Tauri](https://tauri.app/).  
+  
+  
+If you want to start the app in development mode, make sure you have [Rust](https://www.rust-lang.org/) and [Bun](https://bun.sh/) installed and then simply run
+```sh
+bun tauri dev
+```
 
 Currently implemented:
 - Text transfer with
