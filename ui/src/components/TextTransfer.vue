@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {invoke} from "@tauri-apps/api/core";
-import { createDiscreteApi } from 'naive-ui'
+import {createDiscreteApi} from 'naive-ui'
 
 export interface Message {
   id: number
@@ -85,6 +85,10 @@ function addMessage() {
 function deleteMessage(m: Message) {
   messages.value = messages.value.filter((x: Message) => x !== m);
 }
+
+function saveMessage() {
+
+}
 </script>
 
 <template>
@@ -127,14 +131,17 @@ function deleteMessage(m: Message) {
         Save Message
       </n-button>
     </n-flex>
-    <n-flex vertical
-        :style="{ width: 'calc(750px - 2 * 12px)', borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px'}">
+    <n-flex v-if="messages.length > 0"
+            :style="{ width: 'calc(750px - 2 * 12px)', borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px'}"
+            vertical>
       <n-flex v-for="message in messages" :key="message.id">
-        <p>"{{ message.text }}" | Speed: {{ message.speed }} | Animation: {{capitalize(message.animation) }} | Effects:
-          {{ message.effects.length > 0 ? message.effects.join(", ") : "None" }} | Font size: {{ message.fontSize }}</p>
-        <p @click="deleteMessage(message)" :style="{cursor: 'pointer'}">x</p>
+        <p>"{{ message.text }}" | Speed: {{ message.speed }} | Animation: {{ capitalize(message.animation) }} | Effects:
+          {{ message.effects.length > 0 ? message.effects.join(", ") : "None" }} | Font size: {{
+            message.font_size
+          }}</p>
+        <p :style="{cursor: 'pointer'}" @click="deleteMessage(message)">x</p>
       </n-flex>
-      <n-button type="primary" @click="setMessages" v-if="messages.length > 0">
+      <n-button type="primary" @click="setMessages">
         Push all messages
       </n-button>
     </n-flex>

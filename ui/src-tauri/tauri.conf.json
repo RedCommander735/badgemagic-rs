@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "ui",
+  "productName": "Badgemagic UI",
   "version": "0.1.0",
-  "identifier": "com.badgemagic-rs.app",
+  "identifier": "com.badgemagic-rs",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",

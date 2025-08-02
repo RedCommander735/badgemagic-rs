@@ -10,7 +10,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     Dropdown: typeof import('./src/components/Dropdown.vue')['default']
     NButton: typeof import('naive-ui')['NButton']
-    NColumn: typeof import('naive-ui')['NColumn']
     NConfigProvider: typeof import('naive-ui')['NConfigProvider']
     NFlex: typeof import('naive-ui')['NFlex']
     NGlobalStyle: typeof import('naive-ui')['NGlobalStyle']
@@ -18,13 +17,9 @@ declare module 'vue' {
     NInputGroup: typeof import('naive-ui')['NInputGroup']
     NInputGroupLabel: typeof import('naive-ui')['NInputGroupLabel']
     NInputNumber: typeof import('naive-ui')['NInputNumber']
-    NRow: typeof import('naive-ui')['NRow']
     NSelect: typeof import('naive-ui')['NSelect']
-    NSpace: typeof import('naive-ui')['NSpace']
-    NSplit: typeof import('naive-ui')['NSplit']
     NTabPane: typeof import('naive-ui')['NTabPane']
     NTabs: typeof import('naive-ui')['NTabs']
-    NThing: typeof import('naive-ui')['NThing']
     TextTransfer: typeof import('./src/components/TextTransfer.vue')['default']
   }
 }
