@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    badgemagic_rs_ui_lib::run()
+    ui_lib::run()
 }
