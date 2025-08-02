@@ -1,4 +1,5 @@
 use std::fs;
+use std::num::TryFromIntError;
 use std::path::PathBuf;
 use anyhow::{Result, Error};
 use badgemagic::{
@@ -8,19 +9,24 @@ use badgemagic::{
 use badgemagic::embedded_graphics::{
     geometry::Point,
     image::{Image, ImageRawLE},
-    mono_font::{iso_8859_1::FONT_5X8, MonoTextStyle},
+    mono_font::{iso_8859_1::FONT_5X8, iso_8859_1::FONT_6X9, MonoTextStyle, MonoFont},
     pixelcolor::BinaryColor,
-    text::Text,
+    text::{Text},
     Drawable, Pixel,
 };
 use serde::Deserialize;
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
-fn set_text(text: &str, speed: u8, mode: &str) -> String {
+fn set_text(text: &str, speed: u8, animation: &str, effects: Vec<&str>, font_size: u8) -> String {
     let speed: Speed = Speed::try_from(speed).unwrap_or(Speed::Fps2_8);
-    let mode: Mode = Mode::try_from(mode).unwrap_or(Mode::Left);
+    let mode: Mode = Mode::try_from(animation).unwrap_or(Mode::Left);
 
-    let result = write_text_payload(text, speed, mode);
+    let flash: bool = effects.contains(&"flashing");
+    let border: bool = effects.contains(&"border");
+    let invert: bool = effects.contains(&"inverted");
+
+    let size: FontSize = FontSize::try_from(font_size).unwrap_or(FontSize::SIZE_6x9);
+
+    let result = write_text_payload(text, speed, mode, flash, border, invert, size);
     match result {
         Ok(_) => { "Success!".to_string() }
         Err(err) => { format!("Something went wrong: {}", err.backtrace()) }
@@ -56,14 +62,30 @@ enum Content {
     // PngFile { png_file: PathBuf },
 }
 
-fn write_text_payload(input_text: &str, speed: Speed, mode: Mode) -> Result<()> {
+fn write_text_payload(input_text: &str, speed: Speed, mode: Mode, flashing: bool, border: bool, inverted: bool, font_size: FontSize) -> Result<()> {
     let mut payload = PayloadBuffer::new();
-    let style = Style::default().speed(speed).mode(mode);
+    let mut style = Style::default().speed(speed).mode(mode);
+
+    if flashing {
+        style = style.blink()
+    }
+
+    if border {
+        style = style.border()
+    }
+
+    let font_s = MonoFont::from(font_size);
+    let position = Point::from(font_size);
+
+    let bg_color = BinaryColor::from(inverted);
+
+    let mut font = MonoTextStyle::new(&font_s, bg_color.invert());
+    font.background_color = Some(bg_color);
 
     let text = Text::new(
         input_text,
-        Point::new(0, 8),
-        MonoTextStyle::new(&FONT_5X8, BinaryColor::On),
+        position,
+        font,
     );
 
     payload.add_message_drawable(style, &text);
@@ -83,4 +105,41 @@ fn write_payload(
     //         .build()?
     //         .block_on(async { BleDevice::single().await?.write(payload).await }),
     // }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+enum FontSize {
+    SIZE_5x8,
+    #[default]
+    SIZE_6x9,
+}
+
+impl TryFrom<u8> for FontSize {
+    type Error = TryFromIntError;
+
+    fn try_from(value: u8) -> std::result::Result<Self, Self::Error> {
+        Ok(match value {
+            8 => Self::SIZE_5x8,
+            9 => Self::SIZE_6x9,
+            _ => return Err(u8::try_from(-1).unwrap_err()),
+        })
+    }
+}
+
+impl<'a> From<FontSize> for MonoFont<'a> {
+    fn from(value: FontSize) -> Self {
+        match value {
+            FontSize::SIZE_5x8 => FONT_5X8,
+            FontSize::SIZE_6x9 => FONT_6X9,
+        }
+    }
+}
+
+impl From<FontSize> for Point {
+    fn from(value: FontSize) -> Self {
+        match value {
+            FontSize::SIZE_5x8 => Point::new(0, 8),
+            FontSize::SIZE_6x9 => Point::new(0, 7),
+        }
+    }
 }
