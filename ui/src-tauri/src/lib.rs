@@ -1,17 +1,18 @@
-use std::num::TryFromIntError;
-use std::path::PathBuf;
-use anyhow::{Result};
+use anyhow::Result;
+use badgemagic::embedded_graphics::{
+    geometry::Point,
+    mono_font::{iso_8859_1::FONT_5X8, iso_8859_1::FONT_6X9, MonoFont, MonoTextStyle},
+    pixelcolor::BinaryColor,
+    text::Text,
+};
 use badgemagic::{
     protocol::{Mode, PayloadBuffer, Speed, Style},
     usb_hid::Device as UsbDevice,
 };
-use badgemagic::embedded_graphics::{
-    geometry::Point,
-    mono_font::{iso_8859_1::FONT_5X8, iso_8859_1::FONT_6X9, MonoTextStyle, MonoFont},
-    pixelcolor::BinaryColor,
-    text::{Text},
-};
 use serde::Deserialize;
+use std::num::TryFromIntError;
+use std::path::PathBuf;
+use tauri_plugin_sql::{Migration, MigrationKind};
 
 #[tauri::command]
 fn set_text(text: &str, speed: u8, animation: &str, effects: Vec<&str>, font_size: u8) -> String {
@@ -29,8 +30,10 @@ fn set_text(text: &str, speed: u8, animation: &str, effects: Vec<&str>, font_siz
     payload = write_text_to_payload(payload, text, speed, mode, flash, border, invert, size);
 
     match write_payload(payload) {
-        Ok(_) => { "Success!".to_string() }
-        Err(err) => { format!("Something went wrong: {}", err.backtrace()) }
+        Ok(_) => "Success!".to_string(),
+        Err(err) => {
+            format!("Something went wrong: {}", err.backtrace())
+        }
     }
 }
 
@@ -48,12 +51,23 @@ fn set_messages(messages: Vec<Message>) -> String {
 
         let size: FontSize = FontSize::try_from(message.font_size).unwrap_or(FontSize::Size6x9);
 
-        payload = write_text_to_payload(payload, message.text.as_str(), speed, mode, flash, border, invert, size);
+        payload = write_text_to_payload(
+            payload,
+            message.text.as_str(),
+            speed,
+            mode,
+            flash,
+            border,
+            invert,
+            size,
+        );
     }
 
     match write_payload(payload) {
-        Ok(_) => { "Success!".to_string() }
-        Err(err) => { format!("Something went wrong: {}", err.backtrace()) }
+        Ok(_) => "Success!".to_string(),
+        Err(err) => {
+            format!("Something went wrong: {}", err.backtrace())
+        }
     }
 }
 
@@ -62,15 +76,35 @@ fn list_devices() -> Result<Vec<String>, String> {
     let devices = UsbDevice::list_all();
     match devices {
         Ok(r) => Ok(r),
-        Err(e) => Err(e.to_string())
+        Err(e) => Err(e.to_string()),
     }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let migrations = vec![
+        // Define your migrations here
+        Migration {
+            version: 1,
+            description: "create_initial_tables",
+            sql: "CREATE TABLE messages (id INTEGER PRIMARY KEY, content_id INTEGER, type TEXT);\
+            CREATE TABLE text_messages (id INTEGER PRIMARY KEY, content TEXT, speed INTEGER, animation TEXT, effects TEXT, font_size INTEGER)",
+            kind: MigrationKind::Up,
+        }
+    ];
+
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_sql::Builder::default()
+                .add_migrations("sqlite:messages.db", migrations)
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![set_text, set_messages, list_devices])
+        .invoke_handler(tauri::generate_handler![
+            set_text,
+            set_messages,
+            list_devices
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -86,7 +120,16 @@ enum Content {
     // PngFile { png_file: PathBuf },
 }
 
-fn write_text_to_payload(mut payload: PayloadBuffer, input_text: &str, speed: Speed, mode: Mode, flashing: bool, border: bool, inverted: bool, font_size: FontSize) -> PayloadBuffer {
+fn write_text_to_payload(
+    mut payload: PayloadBuffer,
+    input_text: &str,
+    speed: Speed,
+    mode: Mode,
+    flashing: bool,
+    border: bool,
+    inverted: bool,
+    font_size: FontSize,
+) -> PayloadBuffer {
     let mut style = Style::default().speed(speed).mode(mode);
 
     if flashing {
@@ -105,11 +148,7 @@ fn write_text_to_payload(mut payload: PayloadBuffer, input_text: &str, speed: Sp
     let mut font = MonoTextStyle::new(&font_s, bg_color.invert());
     font.background_color = Some(bg_color);
 
-    let text = Text::new(
-        input_text,
-        position,
-        font,
-    );
+    let text = Text::new(input_text, position, font);
 
     payload.add_message_drawable(style, &text);
 
