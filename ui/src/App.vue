@@ -1,5 +1,8 @@
 <script lang="ts" setup>
 import {darkTheme} from 'naive-ui'
+import Database from '@tauri-apps/plugin-sql';
+
+let db = await Database.load('sqlite:messages.db');
 </script>
 
 <template>
@@ -8,7 +11,7 @@ import {darkTheme} from 'naive-ui'
     <n-flex :style="{ margin: '20px' }">
       <n-tabs default-value="text" type="segment">
         <n-tab-pane name="text" tab="Text">
-          <TextTransfer/>
+          <TextTransfer :db="db"/>
         </n-tab-pane>
         <n-tab-pane name="draw" tab="Draw">
           <p>Placeholder</p>

@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import {invoke} from "@tauri-apps/api/core";
 import {createDiscreteApi} from 'naive-ui'
+import Database from "@tauri-apps/plugin-sql";
+
+interface TextTransferProps {
+  db: Database
+}
 
 export interface Message {
   id: number
@@ -11,6 +16,8 @@ export interface Message {
   font_size: number
   m_type: string
 }
+
+let props = defineProps<TextTransferProps>()
 
 let userMessage = createDiscreteApi(['message'])
 
