@@ -2,6 +2,7 @@
 import {invoke} from "@tauri-apps/api/core";
 import {createDiscreteApi} from 'naive-ui'
 import Database from "@tauri-apps/plugin-sql";
+import CloseFilled from '@vicons/material/CloseFilled'
 
 interface TextTransferProps {
   db: Database
@@ -17,7 +18,12 @@ export interface Message {
   m_type: string
 }
 
+interface InsertId {
+  id: number
+}
+
 let props = defineProps<TextTransferProps>()
+let db = props.db;
 
 let userMessage = createDiscreteApi(['message'])
 
@@ -42,7 +48,7 @@ let effectsOptions = ref([
 let text = ref("");
 let speed = ref(4);
 let animation = ref('left');
-let effects = ref([]);
+let effects = ref<string[]>([]);
 let fontSize = ref(9);
 
 let id = ref(0);
@@ -85,6 +91,8 @@ function addMessage() {
     m_type: 'text',
   };
 
+  console.log(id.value)
+
   id.value++;
   messages.value.push(message);
 }
@@ -93,8 +101,13 @@ function deleteMessage(m: Message) {
   messages.value = messages.value.filter((x: Message) => x !== m);
 }
 
-function saveMessage() {
+async function saveMessage() {
+  let id = (await db.select<InsertId[]>("insert into text_messages (content, speed, animation, effects, font_size) values ($1, $2, $3, $4, $5) returning id",
+      [text.value, speed.value, animation.value, effects.value, fontSize.value]))[0].id;
 
+  console.log(id)
+  db.execute("insert into messages (content_id, type) values ($1, 'text')",
+      [id])
 }
 </script>
 
@@ -139,14 +152,18 @@ function saveMessage() {
       </n-button>
     </n-flex>
     <n-flex v-if="messages.length > 0"
-            :style="{ width: 'calc(750px - 2 * 12px)', borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px'}"
+            :style="{ width: 'calc(750px - 2 * 12px)', borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px' }"
             vertical>
-      <n-flex v-for="message in messages" :key="message.id">
+      <n-flex v-for="message in messages" :key="message.id" :style="{ alignItems: 'center' }">
         <p>"{{ message.text }}" | Speed: {{ message.speed }} | Animation: {{ capitalize(message.animation) }} | Effects:
           {{ message.effects.length > 0 ? message.effects.join(", ") : "None" }} | Font size: {{
             message.font_size
           }}</p>
-        <p :style="{cursor: 'pointer'}" @click="deleteMessage(message)">x</p>
+        <n-button type="primary" @click="deleteMessage(message)" :style="{padding: '0 10px'}">
+          <n-icon>
+            <CloseFilled />
+          </n-icon>
+        </n-button>
       </n-flex>
       <n-button type="primary" @click="setMessages">
         Push all messages
