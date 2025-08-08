@@ -87,13 +87,14 @@ pub fn run() {
         Migration {
             version: 1,
             description: "create_initial_tables",
-            sql: "CREATE TABLE messages (id INTEGER PRIMARY KEY, content_id INTEGER, type TEXT);\
-            CREATE TABLE text_messages (id INTEGER PRIMARY KEY, content TEXT, speed INTEGER, animation TEXT, effects TEXT, font_size INTEGER)",
+            sql: "CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER, type TEXT);\
+                  CREATE TABLE text_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, speed INTEGER, animation TEXT, effects TEXT, font_size INTEGER)",
             kind: MigrationKind::Up,
         }
     ];
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:messages.db", migrations)
