@@ -90,7 +90,13 @@ pub fn run() {
             sql: "CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER, type TEXT);\
                   CREATE TABLE text_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, speed INTEGER, animation TEXT, effects TEXT, font_size INTEGER)",
             kind: MigrationKind::Up,
-        }
+        },
+        // Migration {
+        //     version: 1,
+        //     description: "add_message_groups",
+        //     sql: "CREATE TABLE message_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, speed INTEGER, animation TEXT, effects TEXT, font_size INTEGER)",
+        //     kind: MigrationKind::Up,
+        // }
     ];
 
     tauri::Builder::default()
