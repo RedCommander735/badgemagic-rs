@@ -13,7 +13,7 @@ let props = defineProps<ListComponentButtonProps>()
 </script>
 
 <template>
-  <n-button type="primary" @click="props.function(props.message)" :style="{padding: '0 10px'}" :disabled="disabled">
+  <n-button type="default" @click="props.function(props.message)" :style="{padding: '0 10px'}" :disabled="disabled">
     <n-icon>
       <props.icon/>
     </n-icon>

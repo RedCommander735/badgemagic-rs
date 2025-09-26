@@ -5,29 +5,28 @@ import Database from "@tauri-apps/plugin-sql";
 import CloseFilled from '@vicons/material/CloseFilled'
 import ModeEditFilled from '@vicons/material/ModeEditFilled'
 import ListComponent from "./ListComponent.vue";
+import {Message} from "../App.vue";
+import {UnwrapRef} from "vue";
 
 interface TextTransferProps {
-  db: Database
+  db: Database,
+  messages: UnwrapRef<Message[]>
 }
 
-export interface Message {
-  id: number
-  text: string
-  speed: number
-  animation: string
-  effects: string[]
-  font_size: number
-  m_type: string
+interface TextTransferEmits {
+  add: [message: Message],
+  delete: [message: Message],
+  update: [id: number, text: string, speed: number, animation: string, effects: string[], font_size: number]
 }
 
-interface InsertId {
+interface Id {
   id: number
 }
-
-const messagesKey = "currentMessages";
 
 let props = defineProps<TextTransferProps>()
 let db = props.db;
+
+let emit = defineEmits<TextTransferEmits>()
 
 let userMessage = createDiscreteApi(['message'])
 
@@ -55,13 +54,10 @@ let animation = ref('left');
 let effects = ref<string[]>([]);
 let fontSize = ref(9);
 
-let storedMessages: string | null = localStorage.getItem(messagesKey)
-let parsedMessages: Message[] | null = storedMessages ? JSON.parse(storedMessages) : null;
-let messages = ref<Message[]>(parsedMessages ? parsedMessages : []);
 let id = -1;
 
-if (parsedMessages) {
-  for (let m of parsedMessages) {
+if (props.messages) {
+  for (let m of props.messages) {
     if (m.id < id) {
       id = m.id;
     }
@@ -69,12 +65,7 @@ if (parsedMessages) {
 }
 
 let editMode = ref(false);
-let editId: number | null = null;
-
-watch(messages, () => {
-  localStorage.setItem(messagesKey, JSON.stringify(messages.value))
-  console.log('updated localstorage')
-}, {deep: true})
+let editId: number = 0;
 
 function setText() {
   // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -89,12 +80,12 @@ function setText() {
 
 function setMessages() {
   invoke("set_messages", {
-    messages: messages.value,
+    messages: props.messages,
   });
 }
 
 function addMessage() {
-  if (messages.value.length >= 8) {
+  if (props.messages.length >= 8) {
     userMessage.message.error('No more than 8 messages can be held at a time.')
     return
   }
@@ -111,11 +102,11 @@ function addMessage() {
     m_type: 'text',
   };
 
-  messages.value.push(message);
+  emit('add', message)
 }
 
 function deleteMessage(m: Message) {
-  messages.value = messages.value.filter((x: Message) => x !== m);
+  emit('delete', m)
 }
 
 function editMessage(m: Message) {
@@ -129,25 +120,22 @@ function editMessage(m: Message) {
   fontSize.value = m.font_size;
 }
 
-function saveEditedMessage() {
-  for (let m of messages.value) {
-    if (m.id === editId) {
-      m.text = text.value;
-      m.speed = speed.value;
-      m.animation = animation.value;
-      m.effects = effects.value;
-      m.font_size = fontSize.value;
+function updateMessage() {
+  emit('update', editId, text.value, speed.value, animation.value, effects.value, fontSize.value)
 
-      editMode.value = false;
-      editId = null;
+  editMode.value = false;
+  editId = 0;
+}
 
-      break;
-    }
-  }
+async function updateMessageDb() {
+  let content_id = (await db.select<Id[]>("select content_id as id from messages where id = $1", [editId]))[0].id;
+
+  db.execute("update text_messages set content = $1, speed = $2, animation = $3, effects = $4, font_size = $5 where id = $6",
+      [text.value, speed.value, animation.value, effects.value, fontSize.value, content_id])
 }
 
 async function saveMessage() {
-  let content_id = (await db.select<InsertId[]>("insert into text_messages (content, speed, animation, effects, font_size) values ($1, $2, $3, $4, $5) returning id",
+  let content_id = (await db.select<Id[]>("insert into text_messages (content, speed, animation, effects, font_size) values ($1, $2, $3, $4, $5) returning id",
       [text.value, speed.value, animation.value, effects.value, fontSize.value]))[0].id;
 
   db.execute("insert into messages (content_id, type) values ($1, 'text')",
@@ -162,6 +150,7 @@ async function saveMessage() {
              type="text"/>
 
     <!-- Text input settings -->
+    <!--  TODO Cancel button  -->
     <n-flex
         :style="{ borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px'}">
       <n-input-group>
@@ -188,7 +177,7 @@ async function saveMessage() {
       <n-button type="primary" @click="setText">
         Push
       </n-button>
-      <n-button v-if="editMode" type="primary" @click="saveEditedMessage">
+      <n-button v-if="editMode" type="primary" @click="updateMessage">
         Save
       </n-button>
       <n-button v-else type="primary" @click="addMessage">
@@ -197,12 +186,15 @@ async function saveMessage() {
       <n-button type="primary" @click="saveMessage">
         Save Message to storage
       </n-button>
+      <n-button v-if="editMode && editId >= 0" type="info" @click="updateMessageDb">
+        Update Message in storage
+      </n-button>
     </n-flex>
     <n-divider dashed/>
-    <n-flex v-if="messages.length > 0"
+    <n-flex v-if="props.messages.length > 0"
             :style="{ borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px' }"
             vertical>
-      <n-flex v-for="message in messages" :key="message.id" :style="{ alignItems: 'center' }">
+      <n-flex v-for="message in props.messages" :key="message.id" :style="{ alignItems: 'center' }">
         <ListComponent :message="message">
           <ListComponentButton :message="message" :icon="CloseFilled" :function="deleteMessage" />
           <ListComponentButton :message="message" :icon="ModeEditFilled" :function="editMessage" :disabled="editMode" />

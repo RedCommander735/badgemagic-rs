@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import App from "./App.vue";
 import {darkTheme, GlobalThemeOverrides} from 'naive-ui'
-import {createPressedColor} from "naive-ui/es/_utils/color";
+import {createHoverColor, createPressedColor} from "naive-ui/es/_utils/color";
 
+// https://www.realtimecolors.com/?colors=fbe9e9-010104-990000-6d3535-dd852c&fonts=Inter-Inter
 const primary = 'rgba(169, 41, 41, 1)';
+const info = '#dd852c'
 const text = '#ffffff';
 
 
@@ -12,7 +14,9 @@ const themeOverrides: GlobalThemeOverrides = {
     primaryColor: primary,
     primaryColorHover: createPressedColor(primary),
     primaryColorPressed: createPressedColor(createPressedColor(primary)),
-    textColorBase: text
+    infoColor: info,
+    infoColorHover: createHoverColor(info),
+    infoColorPressed: createPressedColor(info)
   },
   Button: {
     textColorPrimary: text,
