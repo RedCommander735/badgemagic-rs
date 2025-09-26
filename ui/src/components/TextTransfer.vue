@@ -3,6 +3,8 @@ import {invoke} from "@tauri-apps/api/core";
 import {createDiscreteApi} from 'naive-ui'
 import Database from "@tauri-apps/plugin-sql";
 import CloseFilled from '@vicons/material/CloseFilled'
+import ModeEditFilled from '@vicons/material/ModeEditFilled'
+import ListComponent from "./ListComponent.vue";
 
 interface TextTransferProps {
   db: Database
@@ -21,6 +23,8 @@ export interface Message {
 interface InsertId {
   id: number
 }
+
+const messagesKey = "currentMessages";
 
 let props = defineProps<TextTransferProps>()
 let db = props.db;
@@ -51,12 +55,26 @@ let animation = ref('left');
 let effects = ref<string[]>([]);
 let fontSize = ref(9);
 
-let id = ref(0);
-let messages = ref<Message[]>([]);
+let storedMessages: string | null = localStorage.getItem(messagesKey)
+let parsedMessages: Message[] | null = storedMessages ? JSON.parse(storedMessages) : null;
+let messages = ref<Message[]>(parsedMessages ? parsedMessages : []);
+let id = -1;
 
-function capitalize(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+if (parsedMessages) {
+  for (let m of parsedMessages) {
+    if (m.id < id) {
+      id = m.id;
+    }
+  }
 }
+
+let editMode = ref(false);
+let editId: number | null = null;
+
+watch(messages, () => {
+  localStorage.setItem(messagesKey, JSON.stringify(messages.value))
+  console.log('updated localstorage')
+}, {deep: true})
 
 function setText() {
   // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -81,8 +99,10 @@ function addMessage() {
     return
   }
 
+  id--;
+
   let message: Message = {
-    id: id.value,
+    id: id,
     text: text.value,
     speed: speed.value,
     animation: animation.value,
@@ -91,9 +111,6 @@ function addMessage() {
     m_type: 'text',
   };
 
-  console.log(id.value)
-
-  id.value++;
   messages.value.push(message);
 }
 
@@ -101,25 +118,52 @@ function deleteMessage(m: Message) {
   messages.value = messages.value.filter((x: Message) => x !== m);
 }
 
+function editMessage(m: Message) {
+  editId = m.id;
+  editMode.value = true;
+
+  text.value = m.text;
+  speed.value = m.speed;
+  animation.value = m.animation;
+  effects.value = m.effects;
+  fontSize.value = m.font_size;
+}
+
+function saveEditedMessage() {
+  for (let m of messages.value) {
+    if (m.id === editId) {
+      m.text = text.value;
+      m.speed = speed.value;
+      m.animation = animation.value;
+      m.effects = effects.value;
+      m.font_size = fontSize.value;
+
+      editMode.value = false;
+      editId = null;
+
+      break;
+    }
+  }
+}
+
 async function saveMessage() {
-  let id = (await db.select<InsertId[]>("insert into text_messages (content, speed, animation, effects, font_size) values ($1, $2, $3, $4, $5) returning id",
+  let content_id = (await db.select<InsertId[]>("insert into text_messages (content, speed, animation, effects, font_size) values ($1, $2, $3, $4, $5) returning id",
       [text.value, speed.value, animation.value, effects.value, fontSize.value]))[0].id;
 
-  console.log(id)
   db.execute("insert into messages (content_id, type) values ($1, 'text')",
-      [id])
+      [content_id])
 }
 </script>
 
 <template>
   <n-flex vertical>
     <!-- Text input -->
-    <n-input v-model:value="text" :style="{ width: '750px' }" clearable placeholder="Text"
+    <n-input v-model:value="text" clearable placeholder="Text"
              type="text"/>
 
     <!-- Text input settings -->
     <n-flex
-        :style="{ width: 'calc(750px - 2 * 12px)', borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px'}">
+        :style="{ borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px'}">
       <n-input-group>
         <n-input-group-label>Speed</n-input-group-label>
         <n-input-number v-model:value="speed" :max="8" :min="1"
@@ -144,26 +188,25 @@ async function saveMessage() {
       <n-button type="primary" @click="setText">
         Push
       </n-button>
-      <n-button type="primary" @click="addMessage">
+      <n-button v-if="editMode" type="primary" @click="saveEditedMessage">
+        Save
+      </n-button>
+      <n-button v-else type="primary" @click="addMessage">
         Add to messages
       </n-button>
       <n-button type="primary" @click="saveMessage">
-        Save Message
+        Save Message to storage
       </n-button>
     </n-flex>
+    <n-divider dashed/>
     <n-flex v-if="messages.length > 0"
-            :style="{ width: 'calc(750px - 2 * 12px)', borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px' }"
+            :style="{ borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px' }"
             vertical>
       <n-flex v-for="message in messages" :key="message.id" :style="{ alignItems: 'center' }">
-        <p>"{{ message.text }}" | Speed: {{ message.speed }} | Animation: {{ capitalize(message.animation) }} | Effects:
-          {{ message.effects.length > 0 ? message.effects.join(", ") : "None" }} | Font size: {{
-            message.font_size
-          }}</p>
-        <n-button type="primary" @click="deleteMessage(message)" :style="{padding: '0 10px'}">
-          <n-icon>
-            <CloseFilled />
-          </n-icon>
-        </n-button>
+        <ListComponent :message="message">
+          <ListComponentButton :message="message" :icon="CloseFilled" :function="deleteMessage" />
+          <ListComponentButton :message="message" :icon="ModeEditFilled" :function="editMessage" :disabled="editMode" />
+        </ListComponent>
       </n-flex>
       <n-button type="primary" @click="setMessages">
         Push all messages
