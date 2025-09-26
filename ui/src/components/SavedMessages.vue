@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Database from "@tauri-apps/plugin-sql";
 import {Message} from "./TextTransfer.vue";
-import {effect} from "vue";
+import ListComponent from "./ListComponent.vue";
 
 interface SavedMessagesProps {
   db: Database
@@ -42,10 +42,7 @@ let messages = ref<Message[]>(dbMessages.map<Message>((m) => {
           :style="{ width: 'calc(750px - 2 * 12px)', borderRadius: '6px', border: '1px solid #3E3E42', padding: '12px'}"
           vertical>
     <n-flex v-for="message in messages" :key="message.id">
-      <p>"{{ message.text }}" | Speed: {{ message.speed }} | Animation: {{ message.animation }} | Effects:
-        {{ message.effects.length > 0 ? message.effects.join(", ") : "None" }} | Font size: {{
-          message.font_size
-        }}</p>
+      <ListComponent :message="message" />
       <!-- TODO Button "Add to selection", Button "Delete", (Button "Edit") -->
     </n-flex>
   </n-flex>

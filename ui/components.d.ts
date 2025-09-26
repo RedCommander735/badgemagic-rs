@@ -9,8 +9,11 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Dropdown: typeof import('./src/components/Dropdown.vue')['default']
+    ListComponent: typeof import('./src/components/ListComponent.vue')['default']
+    ListComponentButton: typeof import('./src/components/ListComponentButton.vue')['default']
     NButton: typeof import('naive-ui')['NButton']
     NConfigProvider: typeof import('naive-ui')['NConfigProvider']
+    NDivider: typeof import('naive-ui')['NDivider']
     NFlex: typeof import('naive-ui')['NFlex']
     NGlobalStyle: typeof import('naive-ui')['NGlobalStyle']
     NIcon: typeof import('naive-ui')['NIcon']
@@ -21,6 +24,7 @@ declare module 'vue' {
     NSelect: typeof import('naive-ui')['NSelect']
     NTabPane: typeof import('naive-ui')['NTabPane']
     NTabs: typeof import('naive-ui')['NTabs']
+    NThemeEditor: typeof import('naive-ui')['NThemeEditor']
     SavedMessages: typeof import('./src/components/SavedMessages.vue')['default']
     TextTransfer: typeof import('./src/components/TextTransfer.vue')['default']
   }
