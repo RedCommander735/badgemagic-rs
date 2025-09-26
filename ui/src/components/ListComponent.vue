@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {Message} from "./TextTransfer.vue";
+import {Message} from "../App.vue";
 import {UnwrapRef} from "vue";
 
 interface ListComponentProps {
@@ -20,7 +20,7 @@ function capitalize(str: string) {
       }} | Effects:
       {{ props.message.effects.length > 0 ? props.message.effects.join(", ") : "None" }} | Font size: {{
         props.message.font_size
-      }}</p>
+      }} | Saved to storage: {{ props.message.id >= 0 }}</p>
     <n-flex>
       <slot/>
     </n-flex>
