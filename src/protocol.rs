@@ -250,7 +250,7 @@ impl TryFrom<f32> for Brightness {
 }
 
 impl TryFrom<&str> for Mode {
-    type Error = Infallible;
+    type Error = TryFromIntError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value {
