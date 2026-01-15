@@ -18,8 +18,10 @@ function capitalize(str: string) {
     <p>"{{ props.message.text }}" | Speed: {{ props.message.speed }} | Animation: {{
         capitalize(props.message.animation)
       }} | Effects:
-      {{ props.message.effects.length > 0 ? props.message.effects.join(", ") : "None" }} | Font size: {{
-        props.message.font_size
+      {{ props.message.effects.length > 0 ? props.message.effects.join(", ") : "None" }} | Font: {{
+        props.message.font
+      }} | Subtype: {{
+        props.message.font_subtype
       }} | Saved to storage: {{ props.message.id >= 0 }}</p>
     <n-flex>
       <slot/>

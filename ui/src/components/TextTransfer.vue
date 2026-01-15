@@ -16,7 +16,7 @@ interface TextTransferProps {
 interface TextTransferEmits {
   add: [message: Message],
   delete: [message: Message],
-  update: [id: number, text: string, speed: number, animation: string, effects: string[], font_size: number]
+  update: [id: number, text: string, speed: number, animation: string, effects: string[], font: number, subtype: string]
 }
 
 interface Id {
@@ -42,17 +42,64 @@ let animationOptions = ref([
   {value: 'laser', label: 'Laser'},
 ])
 
-let effectsOptions = ref([
+let effectsOptionsWithInvert = ref([
   {value: 'inverted', label: 'Inverted'},
   {value: 'flashing', label: 'Flashing'},
   {value: 'border', label: 'Border'},
 ]);
 
+let effectsOptionsNoInvert = ref([
+  {value: 'inverted', label: 'Inverted'},
+  {value: 'flashing', label: 'Flashing'},
+  {value: 'border', label: 'Border'},
+]);
+
+let fontOptions = ref([
+  {value: 0, label: 'Mono'},
+  {value: 1, label: 'U8G2'},
+]);
+
+let monoOptions = ref([
+  {value: '5x8', label: '5x8'},
+  {value: '6x9', label: '6x9'},
+])
+
+let u8g2Options = ref([
+  {value: 'lucasfont alternate tf', label: 'Lucasfont alternate TF'},
+  {value: 'spleen 5x8 me', label: 'Spleen 5x8 ME'},
+  {value: '6x10 tf', label: '6x10 TF'},
+])
+
 let text = ref("");
 let speed = ref(4);
 let animation = ref('left');
 let effects = ref<string[]>([]);
-let fontSize = ref(9);
+let font = ref(0)
+let subtype = ref(monoOptions.value[0].value)
+
+let effectsOptions = ref(effectsOptionsWithInvert.value);
+let subtypeOptions = ref(monoOptions.value);
+
+watch(font, () => {
+  switch (font.value) {
+    case 0:
+      subtypeOptions.value = monoOptions.value;
+      effectsOptions.value = effectsOptionsWithInvert.value;
+      subtype.value = monoOptions.value[0].value;
+      break
+    case 1:
+      subtypeOptions.value = u8g2Options.value;
+      effectsOptions.value = effectsOptionsNoInvert.value;
+      subtype.value = u8g2Options.value[0].value;
+      effects.value.splice(effects.value.indexOf('inverted'), 1)
+      break
+    default:
+      subtypeOptions.value = monoOptions.value;
+      effectsOptions.value = effectsOptionsWithInvert.value;
+      subtype.value = monoOptions.value[0].value;
+      break
+  }
+})
 
 let id = -1;
 
@@ -74,7 +121,8 @@ function setText() {
     speed: speed.value,
     animation: animation.value,
     effects: effects.value,
-    fontSize: fontSize.value
+    font: font.value,
+    fontSubtype: subtype.value,
   });
 }
 
@@ -98,7 +146,8 @@ function addMessage() {
     speed: speed.value,
     animation: animation.value,
     effects: effects.value,
-    font_size: fontSize.value,
+    font: font.value,
+    font_subtype: subtype.value,
     m_type: 'text',
   };
 
@@ -117,11 +166,12 @@ function editMessage(m: Message) {
   speed.value = m.speed;
   animation.value = m.animation;
   effects.value = m.effects;
-  fontSize.value = m.font_size;
+  font.value = m.font;
+  subtype.value = m.font_subtype;
 }
 
 function updateMessage() {
-  emit('update', editId, text.value, speed.value, animation.value, effects.value, fontSize.value)
+  emit('update', editId, text.value, speed.value, animation.value, effects.value, font.value, subtype.value)
 
   editMode.value = false;
   editId = 0;
@@ -130,13 +180,13 @@ function updateMessage() {
 async function updateMessageDb() {
   let content_id = (await db.select<Id[]>("select content_id as id from messages where id = $1", [editId]))[0].id;
 
-  db.execute("update text_messages set content = $1, speed = $2, animation = $3, effects = $4, font_size = $5 where id = $6",
-      [text.value, speed.value, animation.value, effects.value, fontSize.value, content_id])
+  db.execute("update text_messages set content = $1, speed = $2, animation = $3, effects = $4, font = $5, subtype = $6 where id = $7",
+      [text.value, speed.value, animation.value, effects.value, font.value, subtype.value, content_id])
 }
 
 async function saveMessage() {
-  let content_id = (await db.select<Id[]>("insert into text_messages (content, speed, animation, effects, font_size) values ($1, $2, $3, $4, $5) returning id",
-      [text.value, speed.value, animation.value, effects.value, fontSize.value]))[0].id;
+  let content_id = (await db.select<Id[]>("insert into text_messages (content, speed, animation, effects, font, subtype) values ($1, $2, $3, $4, $5, $6) returning id",
+      [text.value, speed.value, animation.value, effects.value, font.value, subtype.value]))[0].id;
 
   db.execute("insert into messages (content_id, type) values ($1, 'text')",
       [content_id])
@@ -168,9 +218,14 @@ async function saveMessage() {
                   placeholder="Select additional effects"/>
       </n-input-group>
       <n-input-group>
-        <n-input-group-label>Font size</n-input-group-label>
-        <n-input-number v-model:value="fontSize" :max="9" :min="8"
-                        :style="{ width: '80px' }" class="noStrikethrough"/>
+        <n-input-group-label>Font</n-input-group-label>
+        <n-select v-model:value="font" :options="fontOptions"
+                        :style="{ width: '90px' }" class="noStrikethrough"/>
+      </n-input-group>
+      <n-input-group>
+        <n-input-group-label>Subtype</n-input-group-label>
+        <n-select v-model:value="subtype" :options="subtypeOptions"
+                  :style="{ width: '320px' }" class="noStrikethrough"/>
       </n-input-group>
     </n-flex>
     <n-flex>

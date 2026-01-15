@@ -9,7 +9,8 @@ export interface Message {
   speed: number
   animation: string
   effects: string[]
-  font_size: number
+  font: number
+  font_subtype: string
   m_type: string
 }
 
@@ -40,15 +41,15 @@ function deleteMessage(m: Message) {
   messages.value = messages.value.filter((x: Message) => x !== m);
 }
 
-function updateMessage(id: number, text: string, speed: number, animation: string, effects: string[], fontSize: number) {
+function updateMessage(id: number, text: string, speed: number, animation: string, effects: string[], font: number, font_subtype: string) {
   for (let m of messages.value) {
     if (m.id === id) {
       m.text = text;
       m.speed = speed;
       m.animation = animation;
       m.effects = effects;
-      m.font_size = fontSize;
-
+      m.font = font;
+      m.font_subtype = font_subtype
       break;
     }
   }

@@ -17,7 +17,8 @@ interface DBMessage {
   speed: number
   animation: string
   effects: string
-  font_size: number
+  font: number
+  subtype: string
   m_type: string
 }
 
@@ -31,7 +32,7 @@ let emit = defineEmits<SavedMessagesEmits>()
 let userMessage = createDiscreteApi(['message'])
 
 let dbMessages = await props.db.select<DBMessage[]>(
-    "select m.id, tm.content as text, tm.speed, tm.animation, tm.effects, tm.font_size, m.type as m_type \
+    "select m.id, tm.content as text, tm.speed, tm.animation, tm.effects, tm.font, tm.subtype, m.type as m_type \
     from messages m join text_messages tm on  m.content_id = tm.id"
 )
 
@@ -42,7 +43,8 @@ let messages = ref<Message[]>(dbMessages.map<Message>((m) => {
     speed: m.speed,
     animation: m.animation,
     effects: JSON.parse(m.effects),
-    font_size: m.font_size,
+    font: m.font,
+    font_subtype: m.subtype,
     m_type: m.m_type
   }
 }));
