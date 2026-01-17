@@ -8,12 +8,12 @@ import ListComponent from "./ListComponent.vue";
 import {Message} from "../App.vue";
 import {UnwrapRef} from "vue";
 
-interface TextTransferProps {
+export interface MessageTransferProps {
   db: Database,
   messages: UnwrapRef<Message[]>
 }
 
-interface TextTransferEmits {
+export interface MessageTransferEmits {
   add: [message: Message],
   delete: [message: Message],
   update: [id: number, text: string, speed: number, animation: string, effects: string[], font: number, subtype: string]
@@ -23,10 +23,12 @@ interface Id {
   id: number
 }
 
-let props = defineProps<TextTransferProps>()
+// TODO Move Id up to app
+
+let props = defineProps<MessageTransferProps>()
 let db = props.db;
 
-let emit = defineEmits<TextTransferEmits>()
+let emit = defineEmits<MessageTransferEmits>()
 
 let userMessage = createDiscreteApi(['message'])
 

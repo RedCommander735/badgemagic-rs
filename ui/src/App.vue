@@ -63,7 +63,7 @@ function updateMessage(id: number, text: string, speed: number, animation: strin
         <TextTransfer :db="db" :messages="messages" @add="addMessage" @delete="deleteMessage" @update="updateMessage"/>
       </n-tab-pane>
       <n-tab-pane name="draw" tab="Draw">
-        <p>Placeholder</p>
+        <DrawingTransfer :db="db" :messages="messages" @add="addMessage" @delete="deleteMessage" @update="updateMessage"/>
       </n-tab-pane>
       <n-tab-pane name="saved" tab="Saved Messages">
         <SavedMessages :db="db" :messages="messages" @add="addMessage"/>

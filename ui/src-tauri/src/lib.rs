@@ -12,6 +12,7 @@ use badgemagic::{
 use serde::Deserialize;
 use std::num::TryFromIntError;
 use std::path::PathBuf;
+use badgemagic::embedded_graphics::{Drawable, Pixel};
 use tauri_plugin_sql::{Migration, MigrationKind};
 use u8g2_fonts::{U8g2TextStyle, fonts::{u8g2_font_lucasfont_alternate_tf, u8g2_font_spleen5x8_me, u8g2_font_6x10_tf}};
 
@@ -37,6 +38,48 @@ fn set_text(text: &str, speed: u8, animation: &str, effects: Vec<&str>, font: u8
         }
     }
 }
+
+#[tauri::command]
+fn set_drawable(drawable: Vec<bool>, width: usize, speed: u8, animation: &str, effects: Vec<&str>) -> String {
+    let mut payload = PayloadBuffer::new();
+
+    let flashing: bool = effects.contains(&"flashing");
+    let border: bool = effects.contains(&"border");
+
+    let speed: Speed = Speed::try_from(speed).unwrap_or(Speed::Fps2_8);
+    let mode: Mode = Mode::try_from(animation).unwrap_or(Mode::Left);
+
+    let mut style = Style::default().speed(speed).mode(mode);
+
+    if flashing {
+        style = style.blink()
+    }
+
+    if border {
+        style = style.border()
+    }
+
+    let mut buffer = payload.add_message(style, width.div_ceil(8));
+
+    for (idx, val) in drawable.iter().enumerate() {
+        if *val {
+            Pixel(
+                Point::new((idx % width) as i32, (idx / width) as i32),
+                BinaryColor::On,
+            )
+                .draw(&mut buffer)
+                .unwrap();
+        }
+    }
+
+    match write_payload(payload) {
+        Ok(_) => "Success!".to_string(),
+        Err(err) => {
+            format!("Something went wrong: {}", err.backtrace())
+        }
+    }
+}
+
 
 #[tauri::command]
 fn set_messages(messages: Vec<Message>) -> String {
@@ -110,8 +153,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             set_text,
+            set_drawable,
             set_messages,
-            list_devices
+            list_devices,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
