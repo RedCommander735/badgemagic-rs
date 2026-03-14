@@ -57,16 +57,11 @@ function addMessage() {
 
   id--;
 
-  let message: Message = {
-    id: id,
-    text: text.value,
-    speed: speed.value,
-    animation: animation.value,
-    effects: effects.value,
-    font: font.value,
-    font_subtype: subtype.value,
-    m_type: 'text',
-  };
+  let message: DrawableMessage = {
+    drawable: matrix,
+    width: WIDTH,
+    speed: speed
+  }
 
   emit('add', message)
 }
