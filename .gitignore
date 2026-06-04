@@ -2,3 +2,4 @@
 /*.toml
 !/Cargo.toml
 !/rustfmt.toml
+.idea

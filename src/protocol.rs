@@ -9,7 +9,12 @@ use embedded_graphics::{
     primitives::Rectangle,
     Drawable,
 };
-use std::num::TryFromIntError;
+use std::{
+    error::Error,
+    fmt,
+    fmt::{Display, Formatter},
+    num::TryFromIntError,
+};
 use time::OffsetDateTime;
 use zerocopy::{BigEndian, FromBytes, Immutable, IntoBytes, KnownLayout, U16};
 
@@ -155,6 +160,16 @@ impl TryFrom<u8> for Speed {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ModeParseError;
+
+impl Display for ModeParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str("failed to parse Mode from string")
+    }
+}
+impl Error for ModeParseError {}
+
 /// Message display mode
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -245,6 +260,25 @@ impl From<f32> for Brightness {
         } else {
             Self::Full
         }
+    }
+}
+
+impl TryFrom<&str> for Mode {
+    type Error = ModeParseError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(match value {
+            "left" => Self::Left,
+            "right" => Self::Right,
+            "up" => Self::Up,
+            "down" => Self::Down,
+            "center" => Self::Center,
+            "fast" => Self::Fast,
+            "drop" => Self::Drop,
+            "curtain" => Self::Curtain,
+            "laser" => Self::Laser,
+            _ => return Err(ModeParseError),
+        })
     }
 }
 
